@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>JF Fútbol Est</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;padding:8px;background:#f5f5f5;font-size:14px}
+h1{font-size:1.3em;margin:8px 0}
+h2{font-size:1.1em;margin:12px 0 6px;color:#333}
+h3{font-size:1em;margin:8px 0 4px;color:#555}
+button{margin:2px;padding:8px 12px;font-size:.9em;border:0;border-radius:4px;background:#007bff;color:#fff;cursor:pointer}
+button:active{transform:scale(.95)}
+button.away{background:#6c757d}
+button.success{background:#28a745}
+button.danger{background:#dc3545}
+button.warning{background:#ffc107;color:#000}
+.row{display:flex;gap:6px;margin:4px 0;flex-wrap:wrap}
+input,select{padding:6px;margin:2px;border:1px solid #ccc;border-radius:4px;font-size:.9em}
+input[type=number]{width:60px}
+.section{background:#fff;padding:10px;margin:8px 0;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.player{padding:6px;margin:2px;background:#e9ecef;border-radius:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.85em;position:relative}
+.player.titular{background:#d4edda;border-left:3px solid #28a745}
+.player.suplente{background:#fff3cd;border-left:3px solid #ffc107}
+.player-cards{position:absolute;top:2px;right:60px;display:flex;gap:2px;font-size:1.2em}
+.stat-display{display:flex;justify-content:space-between;padding:8px;background:#f8f9fa;border-radius:4px;margin:4px 0;font-weight:bold}
+.stat-table{width:100%;border-collapse:collapse;margin:8px 0}
+.stat-table th{background:#343a40;color:#fff;padding:8px;text-align:left}
+.stat-table td{padding:8px;border-bottom:1px solid #dee2e6}
+.stat-table tr:nth-child(even){background:#f8f9fa}
+.time-selector{display:flex;gap:4px;margin:8px 0}
+.time-selector button{flex:1}
+.time-selector button.active{background:#28a745}
+textarea{width:100%;height:80px;font-size:.8em;font-family:monospace;padding:6px;border:1px solid #ccc;border-radius:4px}
+.clock{font-size:1.5em;font-weight:bold;text-align:center;padding:10px;background:#343a40;color:#fff;border-radius:6px;margin:8px 0}
+.hidden{display:none}
+.tabs{display:flex;gap:4px;margin:8px 0}
+.tabs button{flex:1;background:#6c757d}
+.tabs button.active{background:#007bff}
+.sub-item{background:#e7f3ff;padding:6px;margin:4px 0;border-radius:4px;font-size:.85em;border-left:3px solid #007bff}
+</style>
+</head>
+<body>
+
+<h1>⚽ JF Fútbol Est</h1>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="active" onclick="showTab('setup')">Configuración</button>
+  <button onclick="showTab('match')">Partido</button>
+  <button onclick="showTab('stats')">Estadísticas</button>
+</div>
+
+<!-- TAB 1: CONFIGURACIÓN -->
+<div id="tab-setup">
+  
+  <div class="section">
+    <h2>Equipos</h2>
+    <input id="localName" placeholder="Equipo Local" style="width:calc(50% - 4px)">
+    <input id="visitName" placeholder="Equipo Visitante" style="width:calc(50% - 4px)">
+  </div>
+
+  <div class="section">
+    <h2>Plantel Local</h2>
+    <div class="row">
+      <input id="numLocal" type="number" placeholder="#" style="width:50px">
+      <input id="nameLocal" placeholder="Nombre jugador" style="flex:1">
+      <select id="posLocal">
+        <option>POR</option><option>DEF</option><option>MED</option><option>DEL</option>
+      </select>
+      <button onclick="addPlayer('local')">Agregar</button>
+    </div>
+    <div id="playersLocal"></div>
+  </div>
+
+  <div class="section">
+    <h2>Plantel Visitante</h2>
+    <div class="row">
+      <input id="numVisit" type="number" placeholder="#" style="width:50px">
+      <input id="nameVisit" placeholder="Nombre jugador" style="flex:1">
+      <select id="posVisit">
+        <option>POR</option><option>DEF</option><option>MED</option><option>DEL</option>
+      </select>
+      <button onclick="addPlayer('visit')" class="away">Agregar</button>
+    </div>
+    <div id="playersVisit"></div>
+  </div>
+
+  <button class="success" style="width:100%;padding:12px" onclick="startMatch()">▶️ Comenzar Partido</button>
+</div>
+
+<!-- TAB 2: PARTIDO EN VIVO -->
+<div id="tab-match" class="hidden">
+  
+  <div class="section">
+    <h3>Reloj del Partido</h3>
+    <div class="clock" id="clock">00:00</div>
+    <div class="time-selector">
+      <button class="active" onclick="setTime(1)">1er Tiempo</button>
+      <button onclick="setTime(2)">2do Tiempo</button>
+    </div>
+    <div class="row">
+      <button onclick="toggleClock()">⏯️ Iniciar/Pausar</button>
+      <button onclick="resetClock()" class="warning">🔄 Reiniciar</button>
+      <input id="manualMin" type="number" placeholder="Min" style="width:60px">
+      <button onclick="setManualTime()">⏱️ Ajustar</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Sustituciones</h3>
+    <div class="row">
+      <select id="saleLocal" style="flex:1"></select>
+      <select id="entraLocal" style="flex:1"></select>
+      <button onclick="makeSub('local')">Cambio Local</button>
+    </div>
+    <div class="row">
+      <select id="saleVisit" style="flex:1"></select>
+      <select id="entraVisit" style="flex:1"></select>
+      <button onclick="makeSub('visit')" class="away">Cambio Visit</button>
+    </div>
+    <div id="subsLog"></div>
+  </div>
+
+  <div class="section">
+    <h3>Estadísticas Rápidas</h3>
+    <div class="row">
+      <button onclick="inc('gol','local')">⚽ Gol L</button>
+      <button onclick="inc('gol','visit')" class="away">⚽ Gol V</button>
+    </div>
+    <div class="row">
+      <button onclick="inc('falta','local')">Falta L</button>
+      <button onclick="inc('falta','visit')" class="away">Falta V</button>
+    </div>
+    <div class="row">
+      <button onclick="inc('corner','local')">Corner L</button>
+      <button onclick="inc('corner','visit')" class="away">Corner V</button>
+    </div>
+    <div class="row">
+      <button onclick="inc('llegada','local')">Llegada L</button>
+      <button onclick="inc('llegada','visit')" class="away">Llegada V</button>
+    </div>
+    <div class="row">
+      <button onclick="inc('tiro','local')">Tiro L</button>
+      <button onclick="inc('tiro','visit')" class="away">Tiro V</button>
+    </div>
+    <div class="row">
+      <button onclick="tarjeta('amarilla','local')">🟨 Local</button>
+      <button onclick="tarjeta('amarilla','visit')" class="away">🟨 Visit</button>
+    </div>
+    <div class="row">
+      <button onclick="tarjeta('roja','local')">🟥 Local</button>
+      <button onclick="tarjeta('roja','visit')" class="away">🟥 Visit</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Log en Vivo</h3>
+    <textarea id="liveLog" readonly></textarea>
+  </div>
+
+  <button class="success" style="width:100%" onclick="exportPartialCSV()">💾 Exportar Tiempo Actual</button>
+</div>
+
+<!-- TAB 3: ESTADÍSTICAS -->
+<div id="tab-stats" class="hidden">
+  <div class="section">
+    <h2>Resumen General</h2>
+    <div id="statsDisplay"></div>
+  </div>
+  
+  <div class="section">
+    <h3>Titulares y Suplentes</h3>
+    <div id="formationDisplay"></div>
+  </div>
+
+  <button class="success" style="width:100%;padding:12px" onclick="exportFinalCSV()">📊 Exportar CSV Final</button>
+  <button class="danger" style="width:100%;padding:12px;margin-top:8px" onclick="resetAll()">🗑️ Reiniciar Todo</button>
+</div>
+
+<script>
+// ========== ESTADO GLOBAL ==========
+let data = {
+  teams: {local: '', visit: ''},
+  players: {local: [], visit: []},
+  stats: {
+    tiempo1: {corner:{local:0,visit:0},falta:{local:0,visit:0},tiro:{local:0,visit:0},gol:{local:0,visit:0},llegada:{local:0,visit:0},amarilla:{local:0,visit:0},roja:{local:0,visit:0}},
+    tiempo2: {corner:{local:0,visit:0},falta:{local:0,visit:0},tiro:{local:0,visit:0},gol:{local:0,visit:0},llegada:{local:0,visit:0},amarilla:{local:0,visit:0},roja:{local:0,visit:0}}
+  },
+  subs: {local: [], visit: []},
+  log: [],
+  currentTime: 1,
+  clockRunning: false,
+  clockSeconds: 0
+};
+
+let clockInterval = null;
+
+// ========== PERSISTENCIA ==========
+function saveData(){
+  localStorage.setItem('soccerStatsData', JSON.stringify(data));
+}
+
+function loadData(){
+  const saved = localStorage.getItem('soccerStatsData');
+  if(saved){
+    data = JSON.parse(saved);
+    document.getElementById('localName').value = data.teams.local;
+    document.getElementById('visitName').value = data.teams.visit;
+    renderPlayers('local');
+    renderPlayers('visit');
+  }
+}
+
+// ========== GESTIÓN DE TABS ==========
+function showTab(tab){
+  document.getElementById('tab-setup').classList.add('hidden');
+  document.getElementById('tab-match').classList.add('hidden');
+  document.getElementById('tab-stats').classList.add('hidden');
+  document.getElementById('tab-'+tab).classList.remove('hidden');
+  
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if(tab === 'stats') renderStats();
+}
+
+// ========== JUGADORES ==========
+function addPlayer(team){
+  const num = document.getElementById('num'+capitalize(team)).value;
+  const name = document.getElementById('name'+capitalize(team)).value;
+  const pos = document.getElementById('pos'+capitalize(team)).value;
+  
+  if(!num || !name) return alert('Ingresa número y nombre');
+  
+  data.players[team].push({
+    num: num,
+    name: name,
+    pos: pos,
+    status: 'suplente',
+    amarillas: 0,
+    rojas: 0
+  });
+  
+  document.getElementById('num'+capitalize(team)).value = '';
+  document.getElementById('name'+capitalize(team)).value = '';
+  
+  renderPlayers(team);
+  saveData();
+}
+
+function renderPlayers(team){
+  const container = document.getElementById('players'+capitalize(team));
+  container.innerHTML = '';
+  
+  data.players[team].forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'player ' + p.status;
+    
+    let cardsHTML = '';
+    if(p.amarillas > 0 || p.rojas > 0){
+      cardsHTML = '<div class="player-cards">';
+      for(let i = 0; i < p.amarillas; i++) cardsHTML += '🟨';
+      for(let i = 0; i < p.rojas; i++) cardsHTML += '🟥';
+      cardsHTML += '</div>';
+    }
+    
+    div.innerHTML = `
+      ${cardsHTML}
+      <span>#${p.num} - ${p.name} (${p.pos})</span>
+      <span>
+        <button onclick="toggleStatus('${team}',${idx})" style="font-size:.7em;padding:4px 8px">${p.status === 'titular' ? '⬇️ Suplente' : '⬆️ Titular'}</button>
+        <button onclick="removePlayer('${team}',${idx})" style="font-size:.7em;padding:4px 8px;background:#dc3545">❌</button>
+      </span>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function toggleStatus(team, idx){
+  const p = data.players[team][idx];
+  p.status = p.status === 'titular' ? 'suplente' : 'titular';
+  renderPlayers(team);
+  saveData();
+}
+
+function removePlayer(team, idx){
+  data.players[team].splice(idx, 1);
+  renderPlayers(team);
+  saveData();
+}
+
+// ========== INICIAR PARTIDO ==========
+function startMatch(){
+  data.teams.local = document.getElementById('localName').value || 'Local';
+  data.teams.visit = document.getElementById('visitName').value || 'Visitante';
+  
+  if(data.players.local.length === 0 || data.players.visit.length === 0){
+    return alert('Agrega jugadores a ambos equipos');
+  }
+  
+  saveData();
+  updateSubSelects();
+  renderSubsLog();
+  showTab('match');
+}
+
+// ========== RELOJ ==========
+function updateClock(){
+  const min = Math.floor(data.clockSeconds / 60);
+  const sec = data.clockSeconds % 60;
+  document.getElementById('clock').textContent = `${pad(min)}:${pad(sec)}`;
+}
+
+function toggleClock(){
+  if(data.clockRunning){
+    clearInterval(clockInterval);
+    data.clockRunning = false;
+  } else {
+    clockInterval = setInterval(() => {
+      data.clockSeconds++;
+      updateClock();
+      saveData();
+    }, 1000);
+    data.clockRunning = true;
+  }
+}
+
+function resetClock(){
+  clearInterval(clockInterval);
+  data.clockRunning = false;
+  data.clockSeconds = 0;
+  updateClock();
+  saveData();
+}
+
+function setTime(time){
+  data.currentTime = time;
+  document.querySelectorAll('.time-selector button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  saveData();
+}
+
+function setManualTime(){
+  const min = parseInt(document.getElementById('manualMin').value) || 0;
+  data.clockSeconds = min * 60;
+  updateClock();
+  saveData();
+}
+
+// ========== SUSTITUCIONES ==========
+function updateSubSelects(){
+  const teams = ['local', 'visit'];
+  teams.forEach(team => {
+    const titulares = data.players[team].filter(p => p.status === 'titular');
+    const suplentes = data.players[team].filter(p => p.status === 'suplente');
+    
+    const saleSel = document.getElementById('sale'+capitalize(team));
+    const entraSel = document.getElementById('entra'+capitalize(team));
+    
+    saleSel.innerHTML = '<option value="">Sale...</option>' + titulares.map(p => `<option value="${p.num}">#${p.num} - ${p.name}</option>`).join('');
+    entraSel.innerHTML = '<option value="">Entra...</option>' + suplentes.map(p => `<option value="${p.num}">#${p.num} - ${p.name}</option>`).join('');
+  });
+}
+
+function makeSub(team){
+  const saleNum = document.getElementById('sale'+capitalize(team)).value;
+  const entraNum = document.getElementById('entra'+capitalize(team)).value;
+  
+  if(!saleNum || !entraNum) return alert('Selecciona jugador que sale y entra');
+  
+  const sale = data.players[team].find(p => p.num == saleNum);
+  const entra = data.players[team].find(p => p.num == entraNum);
+  
+  if(!sale || !entra) return;
+  
+  sale.status = 'suplente';
+  entra.status = 'titular';
+  
+  const time = Math.floor(data.clockSeconds / 60);
+  const log = `${time}' - Cambio ${team.toUpperCase()}: Sale #${sale.num} ${sale.name} ↔️ Entra #${entra.num} ${entra.name}`;
+  
+  data.subs[team].push(log);
+  data.log.push(log);
+  
+  updateSubSelects();
+  updateLiveLog();
+  renderPlayers(team);
+  renderSubsLog();
+  saveData();
+}
+
+function renderSubsLog(){
+  const container = document.getElementById('subsLog');
+  container.innerHTML = '';
+  
+  const allSubs = [
+    ...data.subs.local.map(s => ({text: s, team: 'local'})),
+    ...data.subs.visit.map(s => ({text: s, team: 'visit'}))
+  ];
+  
+  allSubs.forEach(sub => {
+    const div = document.createElement('div');
+    div.className = 'sub-item';
+    div.textContent = sub.text;
+    container.appendChild(div);
+  });
+}
+
+// ========== ESTADÍSTICAS ==========
+function inc(stat, team){
+  // Verificar si es gol o falta (requiere número de jugador)
+  if(stat === 'gol' || stat === 'falta'){
+    const titulares = data.players[team].filter(p => p.status === 'titular');
+    if(titulares.length === 0) return alert('No hay titulares en el equipo');
+    
+    let options = titulares.map(p => `${p.num}. ${p.name}`).join('\n');
+    const jugadorNum = prompt(`Selecciona el número del jugador (${team}):\n\n${options}`);
+    
+    if(!jugadorNum) return;
+    
+    const jugador = data.players[team].find(p => p.num == jugadorNum);
+    if(!jugador) return alert('Jugador no encontrado');
+    
+    const tiempo = 'tiempo' + data.currentTime;
+    data.stats[tiempo][stat][team]++;
+    
+    const time = Math.floor(data.clockSeconds / 60);
+    const emoji = stat === 'gol' ? '⚽' : '';
+    const log = `${time}' - ${emoji} ${stat.toUpperCase()} ${team.toUpperCase()} - #${jugador.num} ${jugador.name} (${data.stats[tiempo][stat][team]})`;
+    data.log.push(log);
+    
+    updateLiveLog();
+    saveData();
+  } else {
+    // Para corner, llegada, tiro (no requieren jugador específico)
+    const tiempo = 'tiempo' + data.currentTime;
+    data.stats[tiempo][stat][team]++;
+    
+    const time = Math.floor(data.clockSeconds / 60);
+    const log = `${time}' - ${stat.toUpperCase()} ${team.toUpperCase()} (${data.stats[tiempo][stat][team]})`;
+    data.log.push(log);
+    
+    updateLiveLog();
+    saveData();
+  }
+}
+
+function tarjeta(color, team){
+  // Seleccionar jugador
+  const titulares = data.players[team].filter(p => p.status === 'titular');
+  if(titulares.length === 0) return alert('No hay titulares en el equipo');
+  
+  let options = titulares.map(p => `${p.num}. ${p.name}`).join('\n');
+  const jugadorNum = prompt(`Selecciona el número del jugador (${team}):\n\n${options}`);
+  
+  if(!jugadorNum) return;
+  
+  const jugador = data.players[team].find(p => p.num == jugadorNum);
+  if(!jugador) return alert('Jugador no encontrado');
+  
+  // Agregar tarjeta al jugador
+  if(color === 'amarilla') jugador.amarillas++;
+  else if(color === 'roja') jugador.rojas++;
+  
+  // Actualizar estadísticas
+  const tiempo = 'tiempo' + data.currentTime;
+  data.stats[tiempo][color][team]++;
+  
+  const time = Math.floor(data.clockSeconds / 60);
+  const emoji = color === 'amarilla' ? '🟨' : '🟥';
+  const log = `${time}' - ${emoji} ${color.toUpperCase()} ${team.toUpperCase()} - #${jugador.num} ${jugador.name}`;
+  data.log.push(log);
+  
+  updateLiveLog();
+  renderPlayers(team);
+  saveData();
+}
+
+function updateLiveLog(){
+  document.getElementById('liveLog').value = data.log.slice(-10).reverse().join('\n');
+}
+
+// ========== ESTADÍSTICAS DISPLAY ==========
+function renderStats(){
+  const t1 = data.stats.tiempo1;
+  const t2 = data.stats.tiempo2;
+  
+  let html = '<h3>1er Tiempo</h3>';
+  html += `<table class="stat-table">
+    <tr>
+      <th>Estadística</th>
+      <th>${data.teams.local}</th>
+      <th>${data.teams.visit}</th>
+    </tr>
+    <tr><td>Goles</td><td>${t1.gol.local}</td><td>${t1.gol.visit}</td></tr>
+    <tr><td>Faltas</td><td>${t1.falta.local}</td><td>${t1.falta.visit}</td></tr>
+    <tr><td>Corners</td><td>${t1.corner.local}</td><td>${t1.corner.visit}</td></tr>
+    <tr><td>Llegadas</td><td>${t1.llegada.local}</td><td>${t1.llegada.visit}</td></tr>
+    <tr><td>Tiros</td><td>${t1.tiro.local}</td><td>${t1.tiro.visit}</td></tr>
+    <tr><td>Amarillas</td><td>${t1.amarilla.local}</td><td>${t1.amarilla.visit}</td></tr>
+    <tr><td>Rojas</td><td>${t1.roja.local}</td><td>${t1.roja.visit}</td></tr>
+  </table>`;
+  
+  html += '<h3>2do Tiempo</h3>';
+  html += `<table class="stat-table">
+    <tr>
+      <th>Estadística</th>
+      <th>${data.teams.local}</th>
+      <th>${data.teams.visit}</th>
+    </tr>
+    <tr><td>Goles</td><td>${t2.gol.local}</td><td>${t2.gol.visit}</td></tr>
+    <tr><td>Faltas</td><td>${t2.falta.local}</td><td>${t2.falta.visit}</td></tr>
+    <tr><td>Corners</td><td>${t2.corner.local}</td><td>${t2.corner.visit}</td></tr>
+    <tr><td>Llegadas</td><td>${t2.llegada.local}</td><td>${t2.llegada.visit}</td></tr>
+    <tr><td>Tiros</td><td>${t2.tiro.local}</td><td>${t2.tiro.visit}</td></tr>
+    <tr><td>Amarillas</td><td>${t2.amarilla.local}</td><td>${t2.amarilla.visit}</td></tr>
+    <tr><td>Rojas</td><td>${t2.roja.local}</td><td>${t2.roja.visit}</td></tr>
+  </table>`;
+  
+  html += '<h3>Total</h3>';
+  html += `<table class="stat-table">
+    <tr>
+      <th>Estadística</th>
+      <th>${data.teams.local}</th>
+      <th>${data.teams.visit}</th>
+    </tr>
+    <tr><td>Goles</td><td>${t1.gol.local + t2.gol.local}</td><td>${t1.gol.visit + t2.gol.visit}</td></tr>
+    <tr><td>Faltas</td><td>${t1.falta.local + t2.falta.local}</td><td>${t1.falta.visit + t2.falta.visit}</td></tr>
+    <tr><td>Corners</td><td>${t1.corner.local + t2.corner.local}</td><td>${t1.corner.visit + t2.corner.visit}</td></tr>
+    <tr><td>Llegadas</td><td>${t1.llegada.local + t2.llegada.local}</td><td>${t1.llegada.visit + t2.llegada.visit}</td></tr>
+    <tr><td>Tiros</td><td>${t1.tiro.local + t2.tiro.local}</td><td>${t1.tiro.visit + t2.tiro.visit}</td></tr>
+    <tr><td>Amarillas</td><td>${t1.amarilla.local + t2.amarilla.local}</td><td>${t1.amarilla.visit + t2.amarilla.visit}</td></tr>
+    <tr><td>Rojas</td><td>${t1.roja.local + t2.roja.local}</td><td>${t1.roja.visit + t2.roja.visit}</td></tr>
+  </table>`;
+  
+  document.getElementById('statsDisplay').innerHTML = html;
+  
+  // Formación
+  let formation = `<h4>${data.teams.local}</h4>`;
+  formation += '<p><strong>Titulares:</strong> ' + data.players.local.filter(p=>p.status==='titular').map(p=>`#${p.num} ${p.name}`).join(', ') + '</p>';
+  formation += '<p><strong>Suplentes:</strong> ' + data.players.local.filter(p=>p.status==='suplente').map(p=>`#${p.num} ${p.name}`).join(', ') + '</p>';
+  
+  formation += `<h4>${data.teams.visit}</h4>`;
+  formation += '<p><strong>Titulares:</strong> ' + data.players.visit.filter(p=>p.status==='titular').map(p=>`#${p.num} ${p.name}`).join(', ') + '</p>';
+  formation += '<p><strong>Suplentes:</strong> ' + data.players.visit.filter(p=>p.status==='suplente').map(p=>`#${p.num} ${p.name}`).join(', ') + '</p>';
+  
+  document.getElementById('formationDisplay').innerHTML = formation;
+}
+
+// ========== EXPORTAR CSV ==========
+function exportPartialCSV(){
+  const tiempo = data.currentTime;
+  const csv = generateCSV(tiempo);
+  downloadCSV(csv, `${data.teams.local}-vs-${data.teams.visit}-Tiempo${tiempo}.csv`);
+}
+
+function exportFinalCSV(){
+  const csv = generateCSV('final');
+  downloadCSV(csv, `${data.teams.local}-vs-${data.teams.visit}-Final.csv`);
+}
+
+function generateCSV(mode){
+  let csv = `Partido: ${data.teams.local} vs ${data.teams.visit}\n\n`;
+  
+  if(mode === 'final' || mode === 1){
+    csv += `ESTADISTICAS PRIMER TIEMPO\n`;
+    csv += makeCSVStats(data.stats.tiempo1);
+  }
+  
+  if(mode === 'final' || mode === 2){
+    csv += `\nESTADISTICAS SEGUNDO TIEMPO\n`;
+    csv += makeCSVStats(data.stats.tiempo2);
+  }
+  
+  csv += `\nSUSTITUCIONES\n`;
+  csv += `${data.teams.local}:\n${data.subs.local.join('\n')}\n`;
+  csv += `\n${data.teams.visit}:\n${data.subs.visit.join('\n')}\n`;
+  
+  csv += `\nALINEACIONES FINALES\n`;
+  csv += `${data.teams.local} - Titulares:\n${data.players.local.filter(p=>p.status==='titular').map(p=>`#${p.num} ${p.name} (${p.pos})`).join('\n')}\n`;
+  csv += `\n${data.teams.local} - Suplentes:\n${data.players.local.filter(p=>p.status==='suplente').map(p=>`#${p.num} ${p.name} (${p.pos})`).join('\n')}\n`;
+  csv += `\n${data.teams.visit} - Titulares:\n${data.players.visit.filter(p=>p.status==='titular').map(p=>`#${p.num} ${p.name} (${p.pos})`).join('\n')}\n`;
+  csv += `\n${data.teams.visit} - Suplentes:\n${data.players.visit.filter(p=>p.status==='suplente').map(p=>`#${p.num} ${p.name} (${p.pos})`).join('\n')}\n`;
+  
+  csv += `\nTARJETAS POR JUGADOR\n`;
+  csv += `${data.teams.local}:\n`;
+  data.players.local.forEach(p => {
+    if(p.amarillas > 0 || p.rojas > 0){
+      csv += `#${p.num} ${p.name} - Amarillas: ${p.amarillas}, Rojas: ${p.rojas}\n`;
+    }
+  });
+  csv += `\n${data.teams.visit}:\n`;
+  data.players.visit.forEach(p => {
+    if(p.amarillas > 0 || p.rojas > 0){
+      csv += `#${p.num} ${p.name} - Amarillas: ${p.amarillas}, Rojas: ${p.rojas}\n`;
+    }
+  });
+  
+  csv += `\nLOG COMPLETO\n${data.log.join('\n')}`;
+  
+  return csv;
+}
+
+function makeCSVStats(stats){
+  let csv = `Estadistica,${data.teams.local},${data.teams.visit}\n`;
+  csv += `Goles,${stats.gol.local},${stats.gol.visit}\n`;
+  csv += `Faltas,${stats.falta.local},${stats.falta.visit}\n`;
+  csv += `Corners,${stats.corner.local},${stats.corner.visit}\n`;
+  csv += `Llegadas,${stats.llegada.local},${stats.llegada.visit}\n`;
+  csv += `Tiros,${stats.tiro.local},${stats.tiro.visit}\n`;
+  csv += `Amarillas,${stats.amarilla.local},${stats.amarilla.visit}\n`;
+  csv += `Rojas,${stats.roja.local},${stats.roja.visit}\n`;
+  return csv;
+}
+
+function downloadCSV(content, filename){
+  const blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+
+// ========== UTILIDADES ==========
+function capitalize(str){
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function pad(n){
+  return n < 10 ? '0' + n : n;
+}
+
+function resetAll(){
+  if(!confirm('¿Seguro que deseas borrar todo y reiniciar?')) return;
+  localStorage.removeItem('soccerStatsData');
+  location.reload();
+}
+
+// ========== INICIALIZACIÓN ==========
+loadData();
+updateClock();
+</script>
+
+</body>
+</html>
