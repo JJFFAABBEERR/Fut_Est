@@ -271,6 +271,7 @@ function renderPlayers(team){
       <span>#${p.num} - ${p.name} (${p.pos})</span>
       <span>
         <button onclick="toggleStatus('${team}',${idx})" style="font-size:.7em;padding:4px 8px">${p.status === 'titular' ? '⬇️ Suplente' : '⬆️ Titular'}</button>
+        <button onclick="editPlayer('${team}',${idx})" style="font-size:.7em;padding:4px 8px;background:#28a745">✏️ Editar</button>
         <button onclick="removePlayer('${team}',${idx})" style="font-size:.7em;padding:4px 8px;background:#dc3545">❌</button>
       </span>
     `;
@@ -281,6 +282,36 @@ function renderPlayers(team){
 function toggleStatus(team, idx){
   const p = data.players[team][idx];
   p.status = p.status === 'titular' ? 'suplente' : 'titular';
+  renderPlayers(team);
+  saveData();
+}
+
+function editPlayer(team, idx){
+  const p = data.players[team][idx];
+  
+  const newNum = prompt('Ingresa el nuevo número:', p.num);
+  if(newNum === null) return; // Usuario canceló
+  
+  const newName = prompt('Ingresa el nuevo nombre:', p.name);
+  if(newName === null) return;
+  
+  const newPos = prompt('Ingresa la nueva posición (POR/DEF/MED/DEL):', p.pos);
+  if(newPos === null) return;
+  
+  // Validar que la posición sea válida
+  const validPos = ['POR', 'DEF', 'MED', 'DEL'];
+  const posUpper = newPos.toUpperCase();
+  
+  if(!validPos.includes(posUpper)){
+    alert('Posición inválida. Usa: POR, DEF, MED o DEL');
+    return;
+  }
+  
+  // Actualizar datos
+  p.num = newNum || p.num;
+  p.name = newName || p.name;
+  p.pos = posUpper;
+  
   renderPlayers(team);
   saveData();
 }
