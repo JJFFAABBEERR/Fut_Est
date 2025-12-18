@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚽ Dat_Profe_Faber</title>
+    <title>⚽ ProfeData</title>
     <style>
         * {
             margin: 0;
@@ -571,7 +571,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚽ Dat_Profe_Faber</h1>
+            <h1>⚽ ProfeData</h1>
+            <h2>El fútbol se enseña con datos</h2>
             <div class="main-actions">
                 <button class="btn btn-primary" onclick="app.toggleTVMode()">📺 Modo TV</button>
                 <button class="btn btn-secondary" onclick="app.saveMatch()">💾 Guardar Partido</button>
@@ -1863,7 +1864,7 @@
                 const date = new Date().toISOString();
 
                 let csv = '═══════════════════════════════════════════════════════════\n';
-                csv += '          ESTADÍSTICAS DE FÚTBOL PROFESIONAL\n';
+                csv += '          ESTADÍSTICAS DE FÚTBOL PROFEDATA\n';
                 csv += '═══════════════════════════════════════════════════════════\n\n';
                 csv += `EQUIPO A: ${teamAName} (Color: ${teamAColor})\n`;
                 csv += `EQUIPO B: ${teamBName} (Color: ${teamBColor})\n`;
@@ -1929,7 +1930,7 @@
 
                 let txt = '';
                 txt += '╔═══════════════════════════════════════════════════════════════╗\n';
-                txt += '║          ESTADÍSTICAS DE FÚTBOL PROFESIONAL                   ║\n';
+                txt += '║          ESTADÍSTICAS   DE  FÚTBOL PROFEDATA                  ║\n';
                 txt += '╚═══════════════════════════════════════════════════════════════╝\n\n';
                 
                 txt += `┌─────────────────────────────────────────────────────────────┐\n`;
@@ -2024,7 +2025,7 @@
                 }
 
                 txt += '\n═══════════════════════════════════════════════════════════════\n';
-                txt += '              Generado por Estadísticas de Fútbol Pro\n';
+                txt += '       Generado por ProfeData-El fútbol se enseña con datos\n';
                 txt += '═══════════════════════════════════════════════════════════════\n';
 
                 const filename = `estadisticas_${teamAName.replace(/\s+/g, '_')}_vs_${teamBName.replace(/\s+/g, '_')}.txt`;
