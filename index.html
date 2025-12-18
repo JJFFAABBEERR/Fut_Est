@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚽ Estadísticas de Fútbol Pro</title>
+    <title>⚽ Dat_Profe_Faber</title>
     <style>
         * {
             margin: 0;
@@ -507,6 +507,44 @@
                 grid-template-columns: 1fr;
                 gap: 20px;
             }
+
+            .tv-title {
+                font-size: 32px;
+            }
+
+            .tv-team-name {
+                font-size: 24px;
+            }
+
+            .tv-time {
+                font-size: 24px;
+            }
+
+            .tv-stat-title {
+                font-size: 18px;
+            }
+
+            .tv-stat-value {
+                font-size: 32px;
+            }
+
+            .close-tv {
+                width: 50px;
+                height: 50px;
+                font-size: 28px;
+            }
+
+            .tv-mode {
+                padding: 20px;
+            }
+
+            .main-actions {
+                flex-direction: column;
+            }
+
+            .main-actions .btn {
+                width: 100%;
+            }
         }
 
         .radio-group {
@@ -533,13 +571,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚽ ESTADÍSTICAS DE FÚTBOL PROFESIONAL</h1>
+            <h1>⚽ Dat_Profe_Faber</h1>
             <div class="main-actions">
                 <button class="btn btn-primary" onclick="app.toggleTVMode()">📺 Modo TV</button>
                 <button class="btn btn-secondary" onclick="app.saveMatch()">💾 Guardar Partido</button>
                 <button class="btn btn-secondary" onclick="document.getElementById('loadFile').click()">📂 Cargar Partido</button>
                 <button class="btn btn-info" onclick="app.exportJSON()">📥 Exportar JSON</button>
                 <button class="btn btn-info" onclick="app.exportCSV()">📥 Exportar CSV</button>
+                <button class="btn btn-info" onclick="app.exportTXT()">📄 Exportar TXT</button>
                 <button class="btn btn-danger" onclick="app.resetAll()">🔄 Reinicio Completo</button>
             </div>
             <input type="file" id="loadFile" accept=".json" style="display:none" onchange="app.loadMatch(event)">
@@ -1819,8 +1858,19 @@
             exportCSV() {
                 const teamAName = this.data.teams.A.name;
                 const teamBName = this.data.teams.B.name;
+                const teamAColor = this.data.teams.A.color;
+                const teamBColor = this.data.teams.B.color;
+                const date = new Date().toISOString();
 
-                let csv = 'Categoría,Equipo A,Equipo B\n';
+                let csv = '═══════════════════════════════════════════════════════════\n';
+                csv += '          ESTADÍSTICAS DE FÚTBOL PROFESIONAL\n';
+                csv += '═══════════════════════════════════════════════════════════\n\n';
+                csv += `EQUIPO A: ${teamAName} (Color: ${teamAColor})\n`;
+                csv += `EQUIPO B: ${teamBName} (Color: ${teamBColor})\n`;
+                csv += `FECHA DE EXPORTACIÓN: ${date}\n`;
+                csv += '═══════════════════════════════════════════════════════════\n\n';
+                
+                csv += 'Categoría,Equipo A,Equipo B\n';
                 csv += `Goles Totales,${this.data.score.A},${this.data.score.B}\n`;
                 csv += `Posesión (segundos),${this.data.possession.A.seconds},${this.data.possession.B.seconds}\n`;
                 csv += `Llegadas 1er Tiempo,${this.data.attacks.A[1].length},${this.data.attacks.B[1].length}\n`;
@@ -1853,7 +1903,7 @@
 
                 const filename = `estadisticas_${teamAName.replace(/\s+/g, '_')}_vs_${teamBName.replace(/\s+/g, '_')}.csv`;
 
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1862,6 +1912,132 @@
                 URL.revokeObjectURL(url);
 
                 alert('✓ Estadísticas exportadas en CSV');
+            },
+
+            exportTXT() {
+                const teamAName = this.data.teams.A.name;
+                const teamBName = this.data.teams.B.name;
+                const teamAColor = this.data.teams.A.color;
+                const teamBColor = this.data.teams.B.color;
+                const date = new Date().toLocaleString('es-ES', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                let txt = '';
+                txt += '╔═══════════════════════════════════════════════════════════════╗\n';
+                txt += '║          ESTADÍSTICAS DE FÚTBOL PROFESIONAL                   ║\n';
+                txt += '╚═══════════════════════════════════════════════════════════════╝\n\n';
+                
+                txt += `┌─────────────────────────────────────────────────────────────┐\n`;
+                txt += `│ INFORMACIÓN DEL PARTIDO                                     │\n`;
+                txt += `├─────────────────────────────────────────────────────────────┤\n`;
+                txt += `│ Equipo A: ${teamAName.padEnd(48)} │\n`;
+                txt += `│ Color A:  ${teamAColor.padEnd(48)} │\n`;
+                txt += `│ Equipo B: ${teamBName.padEnd(48)} │\n`;
+                txt += `│ Color B:  ${teamBColor.padEnd(48)} │\n`;
+                txt += `│ Fecha:    ${date.padEnd(48)} │\n`;
+                txt += `└─────────────────────────────────────────────────────────────┘\n\n`;
+
+                // Marcador Final
+                txt += `╔═══════════════════════════════════════════════════════════════╗\n`;
+                txt += `║                      MARCADOR FINAL                           ║\n`;
+                txt += `╠═══════════════════════════════════════════════════════════════╣\n`;
+                txt += `║  ${teamAName.padEnd(25)} ${String(this.data.score.A).padStart(2)} - ${String(this.data.score.B).padEnd(2)} ${teamBName.padEnd(25)} ║\n`;
+                txt += `╚═══════════════════════════════════════════════════════════════╝\n\n`;
+
+                // Posesión
+                const totalPoss = this.data.possession.A.seconds + this.data.possession.B.seconds;
+                const possA = totalPoss > 0 ? Math.round((this.data.possession.A.seconds / totalPoss) * 100) : 0;
+                const possB = totalPoss > 0 ? Math.round((this.data.possession.B.seconds / totalPoss) * 100) : 0;
+                
+                txt += '┌─────────────────────────────────────────────────────────────┐\n';
+                txt += '│ POSESIÓN DEL BALÓN                                          │\n';
+                txt += '├─────────────────────────────────────────────────────────────┤\n';
+                txt += `│ ${teamAName.padEnd(30)} ${String(possA + '%').padStart(10)}           │\n`;
+                txt += `│ ${teamBName.padEnd(30)} ${String(possB + '%').padStart(10)}           │\n`;
+                txt += '└─────────────────────────────────────────────────────────────┘\n\n';
+
+                // Estadísticas generales
+                txt += '┌─────────────────────────────────────────────────────────────┐\n';
+                txt += '│ ESTADÍSTICAS GENERALES                                      │\n';
+                txt += '├─────────────────────────────────────────────────────────────┤\n';
+                
+                const attacksA = this.data.attacks.A[1].length + this.data.attacks.A[2].length;
+                const attacksB = this.data.attacks.B[1].length + this.data.attacks.B[2].length;
+                txt += `│ Llegadas/Ataques:           ${String(attacksA).padStart(3)} - ${String(attacksB).padEnd(3)}                │\n`;
+                
+                const cornersA = this.data.stats.corners.A[1] + this.data.stats.corners.A[2];
+                const cornersB = this.data.stats.corners.B[1] + this.data.stats.corners.B[2];
+                txt += `│ Tiros de Esquina:           ${String(cornersA).padStart(3)} - ${String(cornersB).padEnd(3)}                │\n`;
+                
+                const offsidesA = this.data.stats.offsides.A[1] + this.data.stats.offsides.A[2];
+                const offsidesB = this.data.stats.offsides.B[1] + this.data.stats.offsides.B[2];
+                txt += `│ Fueras de Lugar:            ${String(offsidesA).padStart(3)} - ${String(offsidesB).padEnd(3)}                │\n`;
+                
+                txt += `│ Faltas:                     ${String(this.data.fouls.A.length).padStart(3)} - ${String(this.data.fouls.B.length).padEnd(3)}                │\n`;
+                
+                const yellowA = this.data.cards.A.filter(c => c.type === 'yellow').length;
+                const yellowB = this.data.cards.B.filter(c => c.type === 'yellow').length;
+                txt += `│ Tarjetas Amarillas:         ${String(yellowA).padStart(3)} - ${String(yellowB).padEnd(3)}                │\n`;
+                
+                const redA = this.data.cards.A.filter(c => c.type === 'red').length;
+                const redB = this.data.cards.B.filter(c => c.type === 'red').length;
+                txt += `│ Tarjetas Rojas:             ${String(redA).padStart(3)} - ${String(redB).padEnd(3)}                │\n`;
+                
+                txt += `│ Cambios:                    ${String(this.data.substitutions.A.length).padStart(3)} - ${String(this.data.substitutions.B.length).padEnd(3)}                │\n`;
+                txt += '└─────────────────────────────────────────────────────────────┘\n\n';
+
+                // Goles detallados
+                if (this.data.goals.A[1].length + this.data.goals.A[2].length + this.data.goals.B[1].length + this.data.goals.B[2].length > 0) {
+                    txt += '┌─────────────────────────────────────────────────────────────┐\n';
+                    txt += '│ DETALLE DE GOLES                                            │\n';
+                    txt += '├─────────────────────────────────────────────────────────────┤\n';
+                    
+                    ['A', 'B'].forEach(team => {
+                        const teamName = this.data.teams[team].name;
+                        const allGoals = [...this.data.goals[team][1], ...this.data.goals[team][2]];
+                        if (allGoals.length > 0) {
+                            txt += `│ ${teamName}:${' '.repeat(58 - teamName.length)}│\n`;
+                            allGoals.forEach(goal => {
+                                txt += `│   • Jugador #${goal.player} - ${goal.time}${' '.repeat(58 - 15 - goal.player.length - goal.time.length)}│\n`;
+                            });
+                        }
+                    });
+                    
+                    txt += '└─────────────────────────────────────────────────────────────┘\n\n';
+                }
+
+                // Penales si están activos
+                if (this.data.penalties.active && (this.data.penalties.A.length > 0 || this.data.penalties.B.length > 0)) {
+                    const penalGoalA = this.data.penalties.A.filter(p => p.result === 'goal').length;
+                    const penalGoalB = this.data.penalties.B.filter(p => p.result === 'goal').length;
+                    
+                    txt += '┌─────────────────────────────────────────────────────────────┐\n';
+                    txt += '│ TANDA DE PENALES                                            │\n';
+                    txt += '├─────────────────────────────────────────────────────────────┤\n';
+                    txt += `│ Resultado:                  ${String(penalGoalA).padStart(3)} - ${String(penalGoalB).padEnd(3)}                │\n`;
+                    txt += '└─────────────────────────────────────────────────────────────┘\n\n';
+                }
+
+                txt += '\n═══════════════════════════════════════════════════════════════\n';
+                txt += '              Generado por Estadísticas de Fútbol Pro\n';
+                txt += '═══════════════════════════════════════════════════════════════\n';
+
+                const filename = `estadisticas_${teamAName.replace(/\s+/g, '_')}_vs_${teamBName.replace(/\s+/g, '_')}.txt`;
+
+                const blob = new Blob([txt], { type: 'text/plain;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                alert('✓ Estadísticas exportadas en TXT');
             },
 
             resetAll() {
